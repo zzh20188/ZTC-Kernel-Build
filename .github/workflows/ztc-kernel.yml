@@ -91,7 +91,7 @@ jobs:
           $REPO init --depth=1 --u https://android.googlesource.com/kernel/manifest -b common-${FORMATTED_BRANCH}
           REMOTE_BRANCH=$(git ls-remote https://android.googlesource.com/kernel/common ${FORMATTED_BRANCH})
           # Sync repo and apply patches
-          sed -i '/name="kernel\/common"/d .repo/manifests/default.xml
+          sed -i '/name="kernel\/common"/d' .repo/manifests/default.xml
           $REPO --version
           $REPO --trace sync -c -j$(nproc --all)
           rm -rf common
