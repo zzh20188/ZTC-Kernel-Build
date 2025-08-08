@@ -104,6 +104,7 @@ jobs:
           REMOTE_BRANCH=$(git ls-remote https://android.googlesource.com/kernel/common ${FORMATTED_BRANCH})
           DEFAULT_MANIFEST_PATH=.repo/manifests/default.xml
           # Sync repo and apply patches
+          sed -i '/name="kernel\/common"/d $DEFAULT_MANIFEST_PATH
           $REPO --version
           $REPO --trace sync -c -j$(nproc --all) --no-tags --fail-fast
           rm -rf common
@@ -117,7 +118,7 @@ jobs:
         run: |
           echo "更改为配置目录: $CONFIG..."
           cd "$CONFIG"
-          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash s susfs-main
+          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
 
       - name: 为 KernelSU 变体安装 SUSFS 补丁
         run: |
