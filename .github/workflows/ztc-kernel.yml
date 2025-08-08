@@ -218,6 +218,7 @@ jobs:
         run: |
             echo "Patching Image file..."
             cd "$CONFIG/out/android12-5.10/dist"
+            strings Image | grep "Linux version"
             curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU_patch/refs/heads/main/kpm/patch_linux" -o patch
             chmod 777 patch
             ./patch
