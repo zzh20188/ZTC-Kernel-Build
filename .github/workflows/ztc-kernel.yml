@@ -15,18 +15,6 @@ jobs:
       CCACHE_HARDLINK: "true"
 
     steps:
-      - name: Maximize Build Space
-        uses: AdityaGarg8/remove-unwanted-software@v5
-        with:
-          remove-dotnet: 'true'          # Frees ~2 GB
-          remove-android: 'true'         # Frees ~9 GB
-          remove-haskell: 'true'         # Frees ~5.2 GB
-          remove-codeql: 'true'          # Frees ~5.4 GB
-          remove-docker-images: 'true'   # Frees ~3.2 GB
-          remove-large-packages: 'true'  # Frees ~3.1 GB
-          remove-swapfile: 'true'        # Frees ~4 GB
-          remove-cached-tools: 'false'   # Avoid unless confirmed safe
-          verbose: 'true'                # Enable detailed logging
 
       - name: 设定 CONFIG 环境变量
         run: |
@@ -100,13 +88,12 @@ jobs:
           # Initialize and sync kernel source
           echo "Initializing and syncing kernel source..."
           FORMATTED_BRANCH="android12-5.10-lts"
-          $REPO init --depth=1 --u https://android.googlesource.com/kernel/manifest -b common-${FORMATTED_BRANCH} --repo-rev=v2.16
+          $REPO init --depth=1 --u https://android.googlesource.com/kernel/manifest -b common-${FORMATTED_BRANCH}
           REMOTE_BRANCH=$(git ls-remote https://android.googlesource.com/kernel/common ${FORMATTED_BRANCH})
-          DEFAULT_MANIFEST_PATH=.repo/manifests/default.xml
           # Sync repo and apply patches
-          sed -i '/name="kernel\/common"/d $DEFAULT_MANIFEST_PATH
+          sed -i '/name="kernel\/common"/d .repo/manifests/default.xml
           $REPO --version
-          $REPO --trace sync -c -j$(nproc --all) --no-tags --fail-fast
+          $REPO --trace sync -c -j$(nproc --all)
           rm -rf common
           git clone https://github.com/ztc1997/android_gki_kernel_5.10_common.git --depth=1 common
           git clone https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 -b mirror-goog-main-llvm-toolchain-source --depth=1 clang
