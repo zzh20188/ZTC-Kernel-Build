@@ -183,7 +183,6 @@ jobs:
           echo "更改为配置目录: $CONFIG..."
           cd "$CONFIG"
 
-          # MTK
           echo "CONFIG_CC_HAVE_SHADOW_CALL_STACK=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_CC_HAS_BRANCH_PROT_PAC_RET=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_CC_HAS_SIGN_RETURN_ADDRESS=y" >> ./common/arch/arm64/configs/gki_defconfig
@@ -194,21 +193,34 @@ jobs:
           echo "CONFIG_CC_HAVE_STACKPROTECTOR_SYSREG=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_ARCH_SUPPORTS_SHADOW_CALL_STACK=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_SHADOW_CALL_STACK=y" >> ./common/arch/arm64/configs/gki_defconfig
+
+          # clang
           echo "CONFIG_LTO=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_LTO_CLANG=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_HAS_LTO_CLANG=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_LTO_CLANG_FULL=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_CFI_CLANG=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_CFI_CLANG_SHADOW=y" >> ./common/arch/arm64/configs/gki_defconfig
+
           echo "CONFIG_TRIM_UNUSED_KSYMS=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_ARCH_USES_HIGH_VMA_FLAGS=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_HAVE_ARCH_KASAN_HW_TAGS=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_KASAN_HW_TAGS=y" >> ./common/arch/arm64/configs/gki_defconfig
+
+          # MTK
           echo "CONFIG_MEDIATEK_CPUFREQ_DEBUG=m" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_MTK_IPI=m" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_MTK_TINYSYS_MCUPM_SUPPORT=m" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_MTK_MBOX=m" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_RPMSG_MTK=m" >> ./common/arch/arm64/configs/gki_defconfig
+          
+          # 以上和此处是关闭一些疑似导致自动重启的配置
+          sed -i 's/CONFIG_KPROBES=y/CONFIG_KPROBES=n/g' ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KPROBE_EVENTS=n" >> ./common/arch/arm64/configs/gki_defconfig      
+          echo "CONFIG_FTRACE=n" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_FUNCTION_TRACER=n" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_DYNAMIC_FTRACE=n" >> ./common/arch/arm64/configs/gki_defconfig
+
 
           echo "Adding configuration settings to gki_defconfig..."
 
@@ -241,7 +253,7 @@ jobs:
           sed -i 's/check_defconfig//' ./common/build.config.gki
 
           # 用于debug config
-          tail -n 40 ./common/arch/arm64/configs/gki_defconfig
+          tail -n 60 ./common/arch/arm64/configs/gki_defconfig
 
       - name: 配置内核构时间/删除dirty字符
         run: |
@@ -255,7 +267,7 @@ jobs:
       - name: Build with retry
         uses: nick-fields/retry@v3
         with:
-          timeout_minutes: 30
+          timeout_minutes: 90
           max_attempts: 3
           retry_on: timeout
           command: |
