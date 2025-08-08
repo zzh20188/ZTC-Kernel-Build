@@ -122,6 +122,28 @@ jobs:
           cd "$CONFIG"
           curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
 
+      - name: 获取 KSU & SUSFS 版本
+        run: |
+          echo "This is the SukiSU variant"
+          git clone https://github.com/SukiSU-Ultra/SukiSU-Ultra.git KernelSU
+          VAR=700
+          cd KernelSU
+
+          # 计算KSU版本号
+          KSU_GIT_VERSION=$(git rev-list --count HEAD)
+          KSU_VERSION=$((10000 + KSU_GIT_VERSION + VAR))
+          echo $KSU_VERSION
+          echo "KSU_VERSION=$KSU_VERSION" >> $GITHUB_ENV
+
+          # 计算SUSFS版本号
+          INFO="https://gitlab.com/simonpunk/susfs4ksu/-/raw/gki-android14-6.1/ksu_module_susfs/module.prop\?ref_type\=heads"
+          SUS_VERSION=$(curl -s $INFO | awk -F '=' '$1 == "version" { print $2 }')
+          echo $SUS_VERSION
+
+          # 导出这两个值给release
+          echo "kversion=$KSU_VERSION" >> $GITHUB_OUTPUT
+          echo "sversion=$SUS_VERSION" >> $GITHUB_OUTPUT
+
       - name: 为 KernelSU 变体安装 SUSFS 补丁
         run: |
           echo "更改为配置目录: $CONFIG..."
@@ -160,6 +182,34 @@ jobs:
         run: |
           echo "更改为配置目录: $CONFIG..."
           cd "$CONFIG"
+
+          # MTK
+          echo "CONFIG_CC_HAVE_SHADOW_CALL_STACK=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_CC_HAS_BRANCH_PROT_PAC_RET=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_CC_HAS_SIGN_RETURN_ADDRESS=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_AS_HAS_CFI_NEGATE_RA_STATE=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_CC_HAS_BRANCH_PROT_PAC_RET_BTI=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_ARM64_AS_HAS_MTE=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_ARM64_MTE=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_CC_HAVE_STACKPROTECTOR_SYSREG=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_ARCH_SUPPORTS_SHADOW_CALL_STACK=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_SHADOW_CALL_STACK=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_LTO=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_LTO_CLANG=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_HAS_LTO_CLANG=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_LTO_CLANG_FULL=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_CFI_CLANG=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_CFI_CLANG_SHADOW=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_TRIM_UNUSED_KSYMS=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_ARCH_USES_HIGH_VMA_FLAGS=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_HAVE_ARCH_KASAN_HW_TAGS=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KASAN_HW_TAGS=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_MEDIATEK_CPUFREQ_DEBUG=m" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_MTK_IPI=m" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_MTK_TINYSYS_MCUPM_SUPPORT=m" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_MTK_MBOX=m" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_RPMSG_MTK=m" >> ./common/arch/arm64/configs/gki_defconfig
+
           echo "Adding configuration settings to gki_defconfig..."
 
           # Add KSU configuration settings
@@ -214,7 +264,7 @@ jobs:
             cd "$CONFIG"
 
             echo "Building the kernel..."
-            LTO=thin BUILD_CONFIG=common/build.config.gki.aarch64 build/build.sh CC=clang || exit 1
+            LTO=full KCFLAGS="-O3" BUILD_CONFIG=common/build.config.gki.aarch64 build/build.sh CC=clang || exit 1
             
       - name: 修补 Image 文件 安卓12和安卓13(仅限sukisu)
         run: |
@@ -252,8 +302,110 @@ jobs:
           echo "Creating zip file: $ZIP_NAME..."
           mv ../Image ./Image
 
+      - name: 添加 KernelSU
+        id: add_KSU
+        continue-on-error: true
+        run: |
+          echo "SukiSU..."
+          REPO="SukiSU-Ultra/SukiSU-Ultra"
+
+          FILENAME="build-manager.yml"
+          KSUM="manager"
+          
+          # 初始化
+          NUMBER=0
+          DOWNLOAD_URL=""
+
+          echo "开始查找包含 'manager' 产物的构建..."
+          while true; do
+            echo "--------------------------------------------------"
+            echo "正在检查第 ${NUMBER} 个历史构建 (0代表最新)..."
+
+            if [ "$NUMBER" -ge 9 ]; then
+              echo "查找九次仍然失败，跳出循环。"
+              break
+            fi
+
+            # 1. 获取指定顺序的成功构建的ID
+
+            BUILD_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              "https://api.github.com/repos/$REPO/actions/workflows/$FILENAME/runs?status=success" |
+              jq -r '.workflow_runs['"$NUMBER"'].id')
+
+            echo "找到构建 ID: $BUILD_ID"
+
+            ARTIFACTS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              "https://api.github.com/repos/$REPO/actions/runs/$BUILD_ID/artifacts")
+
+            result=$(echo "$ARTIFACTS" | jq -r '.artifacts[] | select(.name | contains("'"$KSUM"'")) | .name')
+
+            if [ -z "$result" ]; then
+              echo "没有找到包含 '$KSUM' 的项"
+              NUMBER=$((NUMBER + 1))
+            else
+              echo "$result"
+              DOWNLOAD_URL=$(echo "$ARTIFACTS" | jq -r '.artifacts[] | select(.name == "'"$KSUM"'") | .archive_download_url')
+              break
+            fi
+
+          done
+          
+          # 下载 Manager 文件
+          curl -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -o "SUKISU-管理器(${{ env.KSU_VERSION }}).zip" "$DOWNLOAD_URL"
+          echo "Manager 文件已下载为：SUKISU-管理器(${{ env.KSU_VERSION }}).zip"
+          unzip *.zip
+          rm -rf *.zip
+  
+      - name: 添加 SUSFS 模块
+        id: add_SUSFS
+        continue-on-error: true
+        run: |
+          BUILD_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          "https://api.github.com/repos/sidex15/susfs4ksu-module/actions/workflows/build.yml/runs?status=success" |
+          jq -r '.workflow_runs[0].id')
+
+          ARTIFACTS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          "https://api.github.com/repos/sidex15/susfs4ksu-module/actions/runs/$BUILD_ID/artifacts")
+
+          DOWNLOAD_URL=$(echo "$ARTIFACTS" | jq -r '.artifacts[0].archive_download_url') 
+
+          NAME=$(echo "$ARTIFACTS" | jq -r '.artifacts[0].name')
+          echo "SUSFS_NAME=$NAME" >> $GITHUB_ENV
+          NAME="susfs-$NAME.zip"
+          
+          echo $DOWNLOAD_URL
+          echo $NAME
+          # 下载 Manager 文件
+          curl -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -o "$NAME" "$DOWNLOAD_URL"
+          echo "$NAME 文件已下载.zip"         
+          
+          echo "正在检查调用者: ${{ github.caller_workflow }}"
+
+          # 由用户调用或是由作者上传到release?
+
+          if [ "${{ github.workflow }}" == "测试发布" ]; then
+            echo "这是测试发布工作流"
+            mkdir -p susfs-module && mv $NAME susfs-module
+          else
+            echo "这是其他工作流"
+            mkdir -p susfs-module && unzip *.zip -d susfs-module
+          fi
+      
       - name: 上传编译资产 (仅 AK3)
         uses: actions/upload-artifact@v4
         with:
           name: ZTC-Anykernel3
           path: ./AnyKernel3/*
+
+      - name: 上传APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sukisu-Manager(${{ env.KSU_VERSION }})
+          path: |
+            *.apk
+  
+      - name: 上传SUSFS模块
+        uses: actions/upload-artifact@v4
+        with:
+          name: susfs-${{ env.SUSFS_NAME }}
+          path: ./susfs-module/*
