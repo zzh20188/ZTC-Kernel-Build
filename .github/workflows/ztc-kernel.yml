@@ -277,7 +277,7 @@ jobs:
             cd "$CONFIG"
 
             echo "Building the kernel..."
-            LTO=thin KCFLAGS="-O3" BUILD_CONFIG=common/build.config.gki.aarch64 build/build.sh CC=clang || exit 1
+            LTO=full BUILD_CONFIG=common/build.config.gki.aarch64 build/build.sh CC=clang || exit 1
             
       - name: 修补 Image 文件 安卓12和安卓13(仅限sukisu)
         run: |
