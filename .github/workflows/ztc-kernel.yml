@@ -453,11 +453,6 @@ jobs:
       # Checkout the code
       - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: RELEASE_NOTES
-        run: |
-          echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
-          echo "$RELEASE_NOTES" >> $GITHUB_ENV
           
       # Get the Latest Tag from GitHub
       - name: 生成和创建新标签
@@ -517,7 +512,8 @@ jobs:
 
       - name: 动态上传发布资产
         run: |
-          for file in ./downloaded-artifacts/*ZTC_SUKISU*/*; do
+          ls -al ./downloaded-artifacts
+          for file in ./downloaded-artifacts/*Anykernel3.zip; do
               # Skip directories
               if [ -d "$file" ]; then
                   continue
