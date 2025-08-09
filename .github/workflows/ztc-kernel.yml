@@ -513,15 +513,9 @@ jobs:
       - name: 动态上传发布资产
         run: |
           ls -al ./downloaded-artifacts
-          for file in ./downloaded-artifacts/*Anykernel3; do
-              # Skip directories
-              if [ -d "$file" ]; then
-                  continue
-              fi
-              # Upload the file to the GitHub release
-              echo "Uploading $file..."
-              gh release upload ${{ env.NEW_TAG }} "$file"
-          done
+          echo "Uploading $file..."
+          gh release upload ${{ env.NEW_TAG }} ./downloaded-artifacts/*Anykernel3
+
 
       # Display Files Uploaded
       - name: Display Files Uploaded
