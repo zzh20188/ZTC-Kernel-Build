@@ -314,6 +314,10 @@ jobs:
           ZIP_NAME="ZTC-AnyKernel3.zip"
           echo "Creating zip file: $ZIP_NAME..."
           mv ../Image ./Image
+          if [ "${{ github.workflow }}" == "ZTC Kernel Build (RL)" ]; then
+            zip -r "./$ZIP_NAME" ./*
+            echo "AK3_RELEASE=$NAME" >> $GITHUB_ENV    
+          fi
 
       - name: 添加 KernelSU
         id: add_KSU
@@ -408,7 +412,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: 5.10.237_ZTC_SUKISU((${{ env.KSU_VERSION }}))_Anykernel3
-          path: ./AnyKernel3/*
+          path: ./AnyKernel3/ZTC-AnyKernel3.zip
 
       - name: 上传APK
         uses: actions/upload-artifact@v4
@@ -512,21 +516,15 @@ jobs:
 
       - name: 动态上传发布资产
         run: |
-            file_to_upload=$(find ./downloaded-artifacts/ -maxdepth 1 -type f -name "*ZTC_SUKISU*")
-
-            if [ -n "$file_to_upload" ]; then
-              if [ $(echo "$file_to_upload" | wc -l) -gt 1 ]; then
-                echo "::warning::Found multiple kernel zip files, uploading the first one found."
-                file_to_upload=$(echo "$file_to_upload" | head -n 1)
+          for file in ./downloaded-artifacts/*ZTC_SUKISU*/*; do
+              # Skip directories
+              if [ -d "$file" ]; then
+                  continue
               fi
-
-              echo "Uploading Kernel Zip: $file_to_upload"
-              gh release upload ${{ env.NEW_TAG }} "$file_to_upload"
-            else
-              echo "::error::Kernel zip file (*ZTC_SUKISU*) not found in ./downloaded-artifacts/"
-              exit 1
-            fi
-
+              # Upload the file to the GitHub release
+              echo "Uploading $file..."
+              gh release upload ${{ env.NEW_TAG }} "$file"
+          done
 
       # Display Files Uploaded
       - name: Display Files Uploaded
