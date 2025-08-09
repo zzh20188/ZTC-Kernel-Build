@@ -20,25 +20,10 @@ jobs:
       CCACHE_HARDLINK: "true"
 
     steps:
-      - name: Increase Swap Space
-        run: |
-          echo "Current Swap:"
-          sudo swapon --show
-          
-          echo "Free space before creating swap:"
-          df -h
-          
-          # 创建一个 16GB 的交换文件 (可以根据需要调整大小)
-          sudo fallocate -l 16G /swapfile
-          sudo chmod 600 /swapfile
-          sudo mkswap /swapfile
-          sudo swapon /swapfile
-          
-          echo "New Swap:"
-          sudo swapon --show
-          
-          echo "Memory and Swap status:"
-          free -h
+      - name: Set Swap Space
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 16
 
       - name: Maximize Build Space
         uses: AdityaGarg8/remove-unwanted-software@v5
