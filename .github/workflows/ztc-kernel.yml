@@ -1,4 +1,4 @@
-name: ZTC Kernel Build
+name: ZTC Kernel Build (RL)
 permissions:
   contents: write  # Allow writing to repository contents (for pushing tags)
   actions: write   # Allows triggering actions
@@ -7,8 +7,13 @@ on:
   workflow_dispatch: # This allows this workflow to be called from another workflow
 
 jobs:
-  build-kernel-kernelsu-susfs:
+  build-ztckernel:
     runs-on: ubuntu-latest
+    outputs:
+      # 输出1: KSU版本号
+      ksuVer: ${{ steps.get_version.outputs.kversion }}
+      # 输出2: SUSFS版本号
+      susVer: ${{ steps.get_version.outputs.sversion }}
     env:
       CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
       CCACHE_NOHASHDIR: "true"
@@ -123,6 +128,7 @@ jobs:
           curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
 
       - name: 获取 KSU & SUSFS 版本
+        id: get_version
         run: |
           echo "This is the SukiSU variant"
           git clone https://github.com/SukiSU-Ultra/SukiSU-Ultra.git KernelSU
@@ -390,8 +396,8 @@ jobs:
 
           # 由用户调用或是由作者上传到release?
 
-          if [ "${{ github.workflow }}" == "测试发布" ]; then
-            echo "这是测试发布工作流"
+          if [ "${{ github.workflow }}" == "ZTC Kernel Build (RL)" ]; then
+            echo "这是发布工作流"
             mkdir -p susfs-module && mv $NAME susfs-module
           else
             echo "这是其他工作流"
@@ -401,7 +407,7 @@ jobs:
       - name: 上传编译资产 (仅 AK3)
         uses: actions/upload-artifact@v4
         with:
-          name: ZTC-Anykernel3
+          name: 5.10.237_ZTC_SUKISU((${{ env.KSU_VERSION }}))_Anykernel3
           path: ./AnyKernel3/*
 
       - name: 上传APK
@@ -416,3 +422,114 @@ jobs:
         with:
           name: susfs-${{ env.SUSFS_NAME }}
           path: ./susfs-module/*
+
+
+  trigger-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    needs:
+        - build-ztckernel
+    env:
+      REPO_OWNER: zzh20188
+      REPO_NAME: GKI_KernelSU_SUSFS
+      SUS_VERSION: ''
+      RELEASE_NAME: "ZTC内核 + SUKISU" 
+      RELEASE_NOTES: |
+        功能:
+        -> SUSFS ඞ (${{ needs.build-ztckernel.outputs.susVer }})
+        -> VFS Hooks v1.4
+        -> Magic Mount 支持
+        -> LineageOS 检测对抗
+        -> jit-zygote-cache 检测对抗
+        > KPM 支持
+        
+        点击下方 **【Assets】** 展开资源,底部还包含最新 **KSU管理器、CI构建SUSFS模块**
+        
+    steps:
+      # Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: 确定分支为 KernelSU-SUKISU
+        run: |
+          # Determine the branch based on user input
+          BRANCH="main"
+          # Store the selected branch in GITHUB_ENV
+          echo "KSU_BRANCH=$BRANCH" >> $GITHUB_ENV
+          echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          
+          
+      # Get the Latest Tag from GitHub
+      - name: 生成和创建新标签
+        run: |
+            # Fetch the latest tag from GitHub (this is the latest tag based on the GitHub API)
+            SUS_VERSION=${{ needs.build-ztckernel.outputs.susVer }}
+            LATEST_TAG=$(gh api repos/$REPO_OWNER/$REPO_NAME/tags --jq '.[0].name'| sed 's/-.*//')
+            echo $SUS_VERSION
+            echo $LATEST_TAG
+
+            # 判断是否相等
+            if [ "$SUS_VERSION" = "$LATEST_TAG" ]; then
+              echo "版本相等"
+              LATEST_TAG=$(gh api repos/$REPO_OWNER/$REPO_NAME/tags --jq '.[0].name')
+            else
+              echo "版本不相等"
+              LATEST_TAG="$SUS_VERSION-r0"
+            fi
+
+            NEW_TAG=$(echo "$LATEST_TAG" | awk -F'-r' '{suffix=$2; if (!suffix) suffix=0; suffix++; printf "%s-r%d", $1, suffix}')
+            
+            
+            # Output the new tag to be used
+            echo "New tag: $NEW_TAG"
+            
+            # Set the new tag as an environment variable to be used in later steps
+            echo "NEW_TAG=${NEW_TAG}" >> $GITHUB_ENV
+            
+            # Create the tag in the repository
+            git tag $NEW_TAG
+            git push --tags
+
+      # 下载 A12 的附件（仅当 A12 生成成功或输入为 true 或为空时）
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./downloaded-artifacts
+          
+
+      # 如果 make_release 为 true，则创建 GitHub 发布并上传文件
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ env.NEW_TAG }}  # Use the generated tag for the release
+          prerelease: true  # Mark the release as a pre-release
+          release_name: ${{ env.RELEASE_NAME }} # Pass the RELEASE_NAME to the action
+          body: ${{ env.RELEASE_NOTES }}  # Pass the RELEASE_NOTES to the action
+
+      - name: 上传KSU管理器 & SUS模块
+        continue-on-error: true
+        run: |
+            echo "Uploading KSU管理器"
+            gh release upload ${{ env.NEW_TAG }} "./downloaded-artifacts/*Manager*/*"
+            gh release upload ${{ env.NEW_TAG }} "./downloaded-artifacts/susfs-*/*"
+
+      - name: 动态上传发布资产
+        run: |
+          for file in ./downloaded-artifacts/*ZTC_SUKISU*/*; do
+              # Skip directories
+              if [ -d "$file" ]; then
+                  continue
+              fi
+              # Upload the file to the GitHub release
+              echo "Uploading $file..."
+              gh release upload ${{ env.NEW_TAG }} "$file"
+          done
+
+      # Display Files Uploaded
+      - name: Display Files Uploaded
+        run: |
+          echo "GitHub release created with the following files:"
+          ls ./downloaded-artifacts/**/*
