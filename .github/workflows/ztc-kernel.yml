@@ -433,17 +433,19 @@ jobs:
         - build-ztckernel
     env:
       REPO_OWNER: zzh20188
-      REPO_NAME: ZTC-Kenel-Build
+      REPO_NAME: ZTC-Kernel-Build
       SUS_VERSION: ''
       RELEASE_NAME: "ZTC内核 + SUKISU" 
       RELEASE_NOTES: |
         功能:
-        -> SUSFS ඞ (${{ needs.build-ztckernel.outputs.susVer }})
+        -> ZTC-Kernel 5.10.237
+        -> SukiSU(${{ needs.build-ztckernel.outputs.ksuVer }})
+        -> SUSFS ඞ ${{ needs.build-ztckernel.outputs.susVer }}
         -> VFS Hooks v1.4
         -> Magic Mount 支持
         -> LineageOS 检测对抗
         -> jit-zygote-cache 检测对抗
-        > KPM 支持
+        -> KPM 支持
         
         点击下方 **【Assets】** 展开资源,底部还包含最新 **KSU管理器、CI构建SUSFS模块**
         
@@ -452,6 +454,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
           
+
       # Get the Latest Tag from GitHub
       - name: 生成和创建新标签
         run: |
