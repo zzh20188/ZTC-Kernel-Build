@@ -1,12 +1,12 @@
 <div align="center">
 
   <!-- 项目 Logo: 采用了 Google Actions for Android 的官方图标，完美契合主题 -->
-  <img src="https://raw.githubusercontent.com/actions/android/main/icon.png" alt="logo" width="120">
+  <img src="https://github.com/github/explore/blob/main/topics/android/android.png?raw=true" alt="logo" width="120">
   <h1 align="center">ZTC-Kernel-Build</h1>
   
   <!-- Slogan -->
   <p align="center">
-    ✨ <strong>专为 GKI 内核设计的一键云端编译方案。</strong> ✨
+    ✨ <strong>专为第三方内核设计的一键云端编译方案。</strong> ✨
   </p>
 
   <!-- 动态构建徽章 -->
@@ -68,7 +68,7 @@
 
 4.  **下载刷机包**
 
-    等待 Actions 运行完成。成功后，在工作流的摘要页面下方可以找到名为 **`kernel-zip`** (或你设置的产物名称) 的构建产物。点击它即可下载内核刷机包。
+    等待 Actions 运行完成。成功后，在工作流的摘要页面下方可以找到名为 **`xxxxx-Anykernel3.zip`** 的构建产物。点击它即可下载内核刷入包。
 
 ---
 
