@@ -512,15 +512,21 @@ jobs:
 
       - name: 动态上传发布资产
         run: |
-          for file in ./downloaded-artifacts/*ZTC_SUKISU*/*; do
-              # Skip directories
-              if [ -d "$file" ]; then
-                  continue
+            file_to_upload=$(find ./downloaded-artifacts/ -maxdepth 1 -type f -name "*ZTC_SUKISU*")
+
+            if [ -n "$file_to_upload" ]; then
+              if [ $(echo "$file_to_upload" | wc -l) -gt 1 ]; then
+                echo "::warning::Found multiple kernel zip files, uploading the first one found."
+                file_to_upload=$(echo "$file_to_upload" | head -n 1)
               fi
-              # Upload the file to the GitHub release
-              echo "Uploading $file..."
-              gh release upload ${{ env.NEW_TAG }} "$file"
-          done
+
+              echo "Uploading Kernel Zip: $file_to_upload"
+              gh release upload ${{ env.NEW_TAG }} "$file_to_upload"
+            else
+              echo "::error::Kernel zip file (*ZTC_SUKISU*) not found in ./downloaded-artifacts/"
+              exit 1
+            fi
+
 
       # Display Files Uploaded
       - name: Display Files Uploaded
