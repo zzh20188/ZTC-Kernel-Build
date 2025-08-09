@@ -433,7 +433,7 @@ jobs:
         - build-ztckernel
     env:
       REPO_OWNER: zzh20188
-      REPO_NAME: GKI_KernelSU_SUSFS
+      REPO_NAME: ZTC-Kenel-Build
       SUS_VERSION: ''
       RELEASE_NAME: "ZTC内核 + SUKISU" 
       RELEASE_NOTES: |
@@ -451,16 +451,6 @@ jobs:
       # Checkout the code
       - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: 确定分支为 KernelSU-SUKISU
-        run: |
-          # Determine the branch based on user input
-          BRANCH="main"
-          # Store the selected branch in GITHUB_ENV
-          echo "KSU_BRANCH=$BRANCH" >> $GITHUB_ENV
-          echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-          
           
       # Get the Latest Tag from GitHub
       - name: 生成和创建新标签
