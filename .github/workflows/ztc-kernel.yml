@@ -216,12 +216,9 @@ jobs:
           
           # 以上和此处是关闭一些疑似导致自动重启的配置
           sed -i 's/CONFIG_KPROBES=y/CONFIG_KPROBES=n/g' ./common/arch/arm64/configs/gki_defconfig
-          echo "CONFIG_KPROBE_EVENTS=n" >> ./common/arch/arm64/configs/gki_defconfig      
           echo "CONFIG_FTRACE=n" >> ./common/arch/arm64/configs/gki_defconfig
-          echo "CONFIG_FUNCTION_TRACER=n" >> ./common/arch/arm64/configs/gki_defconfig
-          echo "CONFIG_DYNAMIC_FTRACE=n" >> ./common/arch/arm64/configs/gki_defconfig
-
-
+         
+          
           echo "Adding configuration settings to gki_defconfig..."
 
           # Add KSU configuration settings
