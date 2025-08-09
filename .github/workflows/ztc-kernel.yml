@@ -434,8 +434,8 @@ jobs:
     env:
       REPO_OWNER: zzh20188
       REPO_NAME: ZTC-Kernel-Build
-      SUS_VERSION: ''
       RELEASE_NAME: "ZTC内核 + SUKISU" 
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       RELEASE_NOTES: |
         功能:
         -> ZTC-Kernel 5.10.237
@@ -453,10 +453,16 @@ jobs:
       # Checkout the code
       - name: Checkout code
         uses: actions/checkout@v3
-          
 
+      - name: RELEASE_NOTES
+        run: |
+          echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
+          echo "$RELEASE_NOTES" >> $GITHUB_ENV
+          
       # Get the Latest Tag from GitHub
       - name: 生成和创建新标签
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
             # Fetch the latest tag from GitHub (this is the latest tag based on the GitHub API)
             SUS_VERSION=${{ needs.build-ztckernel.outputs.susVer }}
