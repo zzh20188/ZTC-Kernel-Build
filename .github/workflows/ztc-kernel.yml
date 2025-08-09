@@ -514,8 +514,9 @@ jobs:
         run: |
           ls -al ./downloaded-artifacts
           echo "Uploading $file..."
-          gh release upload ${{ env.NEW_TAG }} ./downloaded-artifacts/*Anykernel3
-
+          cd ./downloaded-artifacts/*Anykernel3
+          zip -r -9 ./ZTC-KERNEL-ANYKERNEL3.zip .
+          gh release upload ${{ env.NEW_TAG }} ./ZTC-KERNEL-ANYKERNEL3.zip
 
       # Display Files Uploaded
       - name: Display Files Uploaded
