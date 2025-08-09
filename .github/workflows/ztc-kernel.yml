@@ -20,6 +20,26 @@ jobs:
       CCACHE_HARDLINK: "true"
 
     steps:
+      - name: Increase Swap Space
+        run: |
+          echo "Current Swap:"
+          sudo swapon --show
+          
+          echo "Free space before creating swap:"
+          df -h
+          
+          # 创建一个 16GB 的交换文件 (可以根据需要调整大小)
+          sudo fallocate -l 16G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          
+          echo "New Swap:"
+          sudo swapon --show
+          
+          echo "Memory and Swap status:"
+          free -h
+
       - name: Maximize Build Space
         uses: AdityaGarg8/remove-unwanted-software@v5
         with:
@@ -29,7 +49,7 @@ jobs:
           remove-codeql: 'true'          # Frees ~5.4 GB
           remove-docker-images: 'true'   # Frees ~3.2 GB
           remove-large-packages: 'true'  # Frees ~3.1 GB
-          remove-swapfile: 'true'        # Frees ~4 GB
+          remove-swapfile: 'false'        # Frees ~4 GB
           remove-cached-tools: 'false'   # Avoid unless confirmed safe
           verbose: 'true'                # Enable detailed logging
 
@@ -266,12 +286,7 @@ jobs:
           
 
       - name: Build with retry
-        uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 90
-          max_attempts: 3
-          retry_on: timeout
-          command: |
+        run: |
             set -e
             set -x
             cd "$CONFIG"
