@@ -314,10 +314,6 @@ jobs:
           ZIP_NAME="ZTC-AnyKernel3.zip"
           echo "Creating zip file: $ZIP_NAME..."
           mv ../Image ./Image
-          if [ "${{ github.workflow }}" == "ZTC Kernel Build (RL)" ]; then
-            zip -r "./$ZIP_NAME" ./*
-            echo "AK3_RELEASE=$NAME" >> $GITHUB_ENV    
-          fi
 
       - name: 添加 KernelSU
         id: add_KSU
@@ -516,7 +512,8 @@ jobs:
 
       - name: 动态上传发布资产
         run: |
-          for file in ./downloaded-artifacts/*ZTC_SUKISU*/*; do
+          ls -al ./downloaded-artifacts
+          for file in ./downloaded-artifacts/*Anykernel3.zip; do
               # Skip directories
               if [ -d "$file" ]; then
                   continue
