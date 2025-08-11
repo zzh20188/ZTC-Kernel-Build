@@ -434,7 +434,7 @@ jobs:
     env:
       REPO_OWNER: zzh20188
       REPO_NAME: ZTC-Kernel-Build
-      RELEASE_NAME: "ZTC内核 + SUKISU" 
+      RELEASE_NAME: "ZTC内核: SukiSU(${{ needs.build-ztckernel.outputs.ksuVer }}) & SUSFS ${{ needs.build-ztckernel.outputs.susVer }}" 
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       RELEASE_NOTES: |
         功能:
