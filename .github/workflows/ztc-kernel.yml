@@ -23,7 +23,7 @@ jobs:
       - name: Set Swap Space
         uses: pierotofy/set-swap-space@master
         with:
-          swap-size-gb: 16
+          swap-size-gb: 24
 
       - name: Maximize Build Space
         uses: AdityaGarg8/remove-unwanted-software@v5
@@ -523,3 +523,4 @@ jobs:
         run: |
           echo "GitHub release created with the following files:"
           ls ./downloaded-artifacts/**/*
+
