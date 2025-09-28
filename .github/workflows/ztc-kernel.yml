@@ -132,7 +132,7 @@ jobs:
           cd "$CONFIG"
           curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
           cd ./KernelSU
-          sed -i 's|\$(shell cd \$(srctree)/\$(src); \$(GIT_BIN) rev-parse --short=8 HEAD)|酷安mkppk|g' Makefile 
+          sed -i 's|\$(shell cd \$(srctree)/\$(src); \$(GIT_BIN) rev-parse --short=8 HEAD)|酷安mkppk|g' ./kernel/Makefile 
       
       - name: 获取 KSU & SUSFS 版本
         id: get_version
