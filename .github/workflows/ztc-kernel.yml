@@ -131,7 +131,7 @@ jobs:
           echo "更改为配置目录: $CONFIG..."
           cd "$CONFIG"
           curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
-          cd common/KernelSU
+          cd ./KernelSU
           sed -i 's|\$(shell cd \$(srctree)/\$(src); \$(GIT_BIN) rev-parse --short=8 HEAD)|酷安mkppk|g' Makefile 
       
       - name: 获取 KSU & SUSFS 版本
