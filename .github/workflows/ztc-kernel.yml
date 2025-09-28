@@ -117,7 +117,7 @@ jobs:
           $REPO --version
           $REPO --trace sync -c -j$(nproc --all)
           rm -rf common
-          git clone https://github.com/ztc1997/android_gki_kernel_5.10_common.git --depth=1 common
+          git clone https://github.com/ztc1997/android_gki_kernel_5.10_common.git -b android12-5.10-2024-11 --depth=1 common
           # git clone https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 -b mirror-goog-main-llvm-toolchain-source --depth=1 clang
           curl -LSs "https://github.com/zzh20188/ZTC-Kenel-Build/releases/download/clang/clang-r563880.tar.gz" -o clang-r563880.tar.gz
           mkdir prebuilts-master/clang/host/linux-x86/clang-r563880
@@ -131,7 +131,9 @@ jobs:
           echo "更改为配置目录: $CONFIG..."
           cd "$CONFIG"
           curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
-
+          cd common/KernelSU
+          sed -i 's|\$(shell cd \$(srctree)/\$(src); \$(GIT_BIN) rev-parse --short=8 HEAD)|酷安mkppk|g' Makefile 
+      
       - name: 获取 KSU & SUSFS 版本
         id: get_version
         run: |
@@ -407,7 +409,7 @@ jobs:
       - name: 上传编译资产 (仅 AK3)
         uses: actions/upload-artifact@v4
         with:
-          name: 5.10.237_ZTC_SUKISU(${{ env.KSU_VERSION }})_Anykernel3
+          name: 5.10.226(${{ env.KSU_VERSION }})_Anykernel3
           path: ./AnyKernel3/*
 
       - name: 上传APK
@@ -438,7 +440,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       RELEASE_NOTES: |
         功能:
-        -> ZTC-Kernel 5.10.237
+        -> ZTC-Kernel 5.10.226
         -> SukiSU(${{ needs.build-ztckernel.outputs.ksuVer }})
         -> SUSFS ඞ ${{ needs.build-ztckernel.outputs.susVer }}
         -> VFS Hooks v1.4
