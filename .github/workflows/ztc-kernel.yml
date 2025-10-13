@@ -278,7 +278,16 @@ jobs:
           echo "5系:删除dirty字符串"
           sed -i 's/-dirty//' ./common/scripts/setlocalversion
           
-
+      - name: BBG patch
+        run: |
+          cd "$CONFIG"
+          echo "Adding BBG..."
+          curl -sSL https://github.com/zzh20188/Baseband-guard/raw/refs/heads/stable/setup.sh -o setup.sh
+          bash setup.sh stable || true
+          echo "CONFIG_BBG=y" >> common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_LSM=y" >> common/arch/arm64/configs/gki_defconfig
+          echo 'CONFIG_LSM="lockdown,yama,loadpin,safesetid,integrity,selinux,smack,tomoyo,apparmor,bpf,baseband_guard"' >> ./common/arch/arm64/configs/gki_defconfig
+      
       - name: Build with retry
         run: |
             set -e
@@ -447,13 +456,14 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       RELEASE_NOTES: |
         功能:
-        -> ZTC-Kernel 5.10.240
+        -> ZTC-Kernel 5.10.X
         -> SukiSU(${{ needs.build-ztckernel.outputs.ksuVer }})
         -> SUSFS ඞ ${{ needs.build-ztckernel.outputs.susVer }}
         -> VFS Hooks v1.4
         -> Magic Mount 支持
         -> LineageOS 检测对抗
         -> jit-zygote-cache 检测对抗
+        -> BBG 支持
         -> KPM 支持
         
         点击下方 **【Assets】** 展开资源,底部还包含最新 **KSU管理器、CI构建SUSFS模块**
