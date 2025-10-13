@@ -259,7 +259,16 @@ jobs:
           echo "5系:删除dirty字符串"
           sed -i 's/-dirty//' ./common/scripts/setlocalversion
           
-
+      - name: BBG patch
+        run: |
+          cd "$CONFIG"
+          echo "Adding BBG..."
+          curl -sSL https://github.com/zzh20188/Baseband-guard/raw/refs/heads/stable/setup.sh -o setup.sh
+          bash setup.sh stable || true
+          echo "CONFIG_BBG=y" >> common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_LSM=y" >> common/arch/arm64/configs/gki_defconfig
+          echo 'CONFIG_LSM="lockdown,yama,loadpin,safesetid,integrity,selinux,smack,tomoyo,apparmor,bpf,baseband_guard"' >> ./common/arch/arm64/configs/gki_defconfig
+      
       - name: Build with retry
         uses: nick-fields/retry@v3
         with:
