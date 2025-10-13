@@ -184,11 +184,9 @@ jobs:
       - name: BBG patch
         run: |
           cd "$CONFIG"
-          echo "Adding BBG..."
-          curl -sSL https://github.com/zzh20188/Baseband-guard/raw/refs/heads/stable/setup.sh -o setup.sh
-          bash setup.sh stable || true
           echo "CONFIG_BBG=y" >> common/arch/arm64/configs/gki_defconfig
-          sed -i 's/bpf/&,baseband_guard/g' common/security/Kconfig
+          echo "CONFIG_LSM=y" >> common/arch/arm64/configs/gki_defconfig
+          
     
       - name: 应用隐藏某特征的补丁
         run: |
