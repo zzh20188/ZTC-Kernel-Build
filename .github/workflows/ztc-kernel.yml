@@ -169,15 +169,7 @@ jobs:
           echo "Applying hooks for SukiSU..."
           cp ../../kernel_patches/next/scope_min_manual_hooks_v1.4.patch ./
           patch -p1 -F 3 < scope_min_manual_hooks_v1.4.patch
-          
-      - name: BBG patch
-        run: |
-          cd "$CONFIG"
-          echo "Adding BBG..."
-          curl -sSL https://github.com/zzh20188/Baseband-guard/raw/refs/heads/stable/setup.sh -o setup.sh
-          bash setup.sh stable || true
-          echo "CONFIG_BBG=y" >> common/arch/arm64/configs/gki_defconfig
-          sed -i 's/bpf/&,baseband_guard/g' common/security/Kconfig
+
 
       - name: 应用隐藏某特征的补丁
         run: |
