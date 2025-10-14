@@ -264,7 +264,7 @@ jobs:
           cd "$CONFIG"
           echo "Adding BBG..."
           echo "CONFIG_BBG=y" >> common/arch/arm64/configs/gki_defconfig
-          echo "CONFIG_LSM=y" >> common/arch/arm64/configs/gki_defconfig
+          echo 'CONFIG_LSM="lockdown,yama,loadpin,safesetid,integrity,selinux,smack,tomoyo,apparmor,bpf,baseband_guard"' >> common/arch/arm64/configs/gki_defconfig
           
       - name: Build with retry
         uses: nick-fields/retry@v3
