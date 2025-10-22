@@ -453,6 +453,7 @@ jobs:
         -> SukiSU(${{ needs.build-ztckernel.outputs.ksuVer }})
         -> SUSFS ඞ ${{ needs.build-ztckernel.outputs.susVer }}
         -> VFS Hooks v1.4
+        -> BBG支持
         -> Magic Mount 支持
         -> LineageOS 检测对抗
         -> jit-zygote-cache 检测对抗
