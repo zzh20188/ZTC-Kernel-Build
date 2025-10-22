@@ -191,7 +191,6 @@ jobs:
           cp ../../SukiSU_patch/69_hide_stuff.patch ./
           patch -p1 -F 3 < 69_hide_stuff.patch
       - name: BBG patch
-        if: ${{ inputs.use_bbg }}
         run: |
           cd "$CONFIG"
           echo "Adding BBG..."
@@ -288,7 +287,7 @@ jobs:
             cd "$CONFIG"
 
             echo "Building the kernel..."
-            LTO=full BUILD_CONFIG=common/build.config.gki.aarch64 build/build.sh CC=clang || exit 1
+            LTO=thin BUILD_CONFIG=common/build.config.gki.aarch64 build/build.sh CC=clang || exit 1
             
       - name: 修补 Image 文件 安卓12和安卓13(仅限sukisu)
         run: |
@@ -535,3 +534,4 @@ jobs:
         run: |
           echo "GitHub release created with the following files:"
           ls ./downloaded-artifacts/**/*
+
